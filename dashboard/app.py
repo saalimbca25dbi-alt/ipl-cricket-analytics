@@ -6,11 +6,13 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # ================================================================
-# IPL BOWLING INTELLIGENCE — Domain B
+# IPL BOWLING INTELLIGENCE — ADVANCED UI · Domain B
 # Two tabs, exactly 3 KPI cards + 5 charts on each tab.
 # Each chart has its OWN filter expander. Displayed figures come from SQL/q().
+# Cricket animation layer: bowling-delivery scene, ticker, floating balls,
+# bat-swing title, spinning-ball KPI icons.
 # ================================================================
-st.set_page_config(page_title="IPL Bowling Intelligence", page_icon="🏏", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="IPL Bowling Intelligence | Pro Analytics", page_icon="🏏", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
 <style>
@@ -19,135 +21,318 @@ st.markdown("""
 :root {
   color-scheme: dark;
   --bg: #07111f;
-  --panel: rgba(16, 34, 56, .86);
-  --panel-border: rgba(118, 164, 204, .22);
-  --text: #eef6ff;
-  --muted: #9bb3ca;
-  --cyan: #36d6f5;
-  --mint: #43e0b5;
-  --purple: #a78bfa;
-  --orange: #ffb86b;
+  --panel: rgba(15, 34, 56, .88);
+  --panel-border: rgba(124, 178, 220, .24);
+  --text: #eff7ff;
+  --muted: #9bb4cc;
+  --cyan: #38d9f5;
+  --mint: #47e4b8;
+  --purple: #b39aff;
+  --orange: #ffbd72;
+  --pink: #ff78b7;
+  --lime: #d6f36a;
 }
+
 html, body, [class*="css"] { font-family: Inter, sans-serif; }
 .stApp {
   background:
-    radial-gradient(ellipse at 5% 0%, rgba(27, 111, 163, .32), transparent 34%),
-    radial-gradient(ellipse at 95% 8%, rgba(114, 67, 186, .20), transparent 30%),
-    linear-gradient(145deg, #07111f 0%, #0a1728 55%, #07101c 100%);
+    radial-gradient(ellipse at 4% 0%, rgba(24, 135, 190, .27), transparent 32%),
+    radial-gradient(ellipse at 96% 6%, rgba(133, 76, 222, .19), transparent 29%),
+    radial-gradient(ellipse at 52% 100%, rgba(15, 112, 119, .13), transparent 35%),
+    linear-gradient(145deg, #06101d 0%, #0a192b 48%, #07111f 100%);
+  background-size: 150% 150%;
+  animation: backgroundDrift 24s ease-in-out infinite alternate;
   color: var(--text);
 }
-[data-testid="stHeader"] { background: rgba(7,17,31,.35); }
-.block-container { max-width: 1680px; padding-top: 1.5rem; padding-bottom: 3rem; }
+[data-testid="stHeader"] { background: rgba(7,17,31,.42); }
+.block-container { max-width: 1720px; padding-top: 1.4rem; padding-bottom: 3.2rem; position: relative; z-index: 1; }
 [data-testid="stSidebar"] {
-  background: linear-gradient(180deg, #0d2036 0%, #081523 100%);
+  background: linear-gradient(180deg, #102943 0%, #0a1a2c 54%, #071321 100%);
   border-right: 1px solid var(--panel-border);
+  box-shadow: 12px 0 40px rgba(0,0,0,.14);
 }
 [data-testid="stSidebar"] * { color: var(--text); }
 h1,h2,h3,h4,p,label { color: var(--text); }
 h2, h3 { letter-spacing: -.45px; }
+
 .eyebrow {
-  color: var(--mint); font-size: .72rem; font-weight: 900;
-  letter-spacing: 2.5px; text-transform: uppercase;
+  display: inline-block; color: var(--mint); font-size: .70rem; font-weight: 900;
+  letter-spacing: 2.4px; text-transform: uppercase; padding: 6px 10px;
+  border: 1px solid rgba(71,228,184,.2); border-radius: 999px;
+  background: rgba(71,228,184,.06); margin-bottom: 7px;
 }
+.hero-row { display: flex; align-items: center; gap: 14px; margin: .35rem 0 .6rem; }
 .hero-title {
-  font-size: clamp(2.1rem, 4vw, 3.15rem); font-weight: 900;
-  letter-spacing: -1.8px; line-height: 1.1; margin: .35rem 0 .55rem;
-  background: linear-gradient(90deg, #ffffff 0%, #a8f4ff 48%, #b7a5ff 100%);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
+  font-size: clamp(2.1rem, 4vw, 3.25rem); font-weight: 900;
+  letter-spacing: -1.8px; line-height: 1.08; margin: 0;
+  background: linear-gradient(100deg, #ffffff 0%, #9ff4ff 38%, #b7a5ff 70%, #ff9fcf 100%);
+  background-size: 220% auto; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: titleShimmer 9s linear infinite;
 }
-.subtitle { color: #b2c7dc; font-size: 1.02rem; }
+.bat {
+  display: inline-block; font-size: clamp(2.1rem, 4vw, 3.1rem); line-height: 1;
+  transform-origin: 78% 92%; animation: batSwing 3.6s ease-in-out infinite;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,.35));
+}
+.subtitle { color: #b6cbe0; font-size: 1rem; margin-bottom: .4rem; }
 .reader {
-  background: linear-gradient(100deg, rgba(67,224,181,.12), rgba(54,214,245,.08), rgba(167,139,250,.09));
-  border: 1px solid rgba(91, 220, 215, .27); border-left: 4px solid var(--mint);
-  border-radius: 15px; padding: 15px 19px; margin: 18px 0 25px;
-  box-shadow: 0 10px 35px rgba(0,0,0,.12);
+  background: linear-gradient(105deg, rgba(71,228,184,.12), rgba(56,217,245,.09), rgba(179,154,255,.10));
+  border: 1px solid rgba(91,220,215,.30); border-left: 4px solid var(--mint);
+  border-radius: 15px; padding: 15px 19px; margin: 18px 0 24px;
+  box-shadow: 0 12px 34px rgba(0,0,0,.16); animation: riseIn .55s ease both;
 }
 .section-label {
-  color: var(--cyan); font-size: .73rem; font-weight: 900;
-  letter-spacing: 1.8px; text-transform: uppercase; margin: .45rem 0 .85rem;
+  color: var(--cyan); font-size: .72rem; font-weight: 900; letter-spacing: 1.8px;
+  text-transform: uppercase; margin: .45rem 0 .9rem; padding: 8px 11px;
+  border-left: 3px solid var(--cyan); border-radius: 0 9px 9px 0;
+  background: linear-gradient(90deg, rgba(56,217,245,.09), transparent 75%);
 }
+.section-label::before {
+  content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #ff8a80, #c62828); margin-right: 9px; vertical-align: -1px;
+  box-shadow: 0 0 8px rgba(255,80,80,.55); animation: ballPulse 2.4s ease-in-out infinite;
+}
+
+/* ---------- CRICKET LAYER: floating balls ---------- */
+.ball-field { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.ball-field span {
+  position: absolute; bottom: -50px; border-radius: 50%; opacity: 0;
+  background: radial-gradient(circle at 30% 28%, #ff8a80 0%, #d32f2f 45%, #7f0f17 100%);
+  box-shadow: inset -2px -2px 4px rgba(0,0,0,.35);
+  animation: ballFloat linear infinite;
+}
+.ball-field span::before {
+  content: ""; position: absolute; left: 50%; top: 10%; bottom: 10%; width: 0;
+  border-left: 1.5px dashed rgba(255,255,255,.7); transform: translateX(-50%);
+}
+.ball-field span:nth-child(1) { left: 6%;  width: 16px; height: 16px; animation-duration: 26s; animation-delay: 0s; }
+.ball-field span:nth-child(2) { left: 22%; width: 22px; height: 22px; animation-duration: 34s; animation-delay: 6s; }
+.ball-field span:nth-child(3) { left: 41%; width: 14px; height: 14px; animation-duration: 29s; animation-delay: 12s; }
+.ball-field span:nth-child(4) { left: 63%; width: 20px; height: 20px; animation-duration: 37s; animation-delay: 3s; }
+.ball-field span:nth-child(5) { left: 80%; width: 15px; height: 15px; animation-duration: 31s; animation-delay: 15s; }
+.ball-field span:nth-child(6) { left: 93%; width: 19px; height: 19px; animation-duration: 40s; animation-delay: 9s; }
+
+/* ---------- CRICKET LAYER: bowling delivery scene ---------- */
+.pitch-scene {
+  position: relative; height: 138px; margin: 14px 0 8px; border-radius: 18px; overflow: hidden;
+  border: 1px solid rgba(71,228,184,.28);
+  background:
+    repeating-linear-gradient(90deg, rgba(34,139,84,.34) 0 60px, rgba(26,115,70,.34) 60px 120px),
+    linear-gradient(180deg, #0b2a22, #0a3a2a);
+  box-shadow: 0 12px 34px rgba(0,0,0,.22);
+}
+.pitch-strip {
+  position: absolute; left: 7%; right: 7%; bottom: 18px; height: 36px; border-radius: 6px;
+  background: linear-gradient(180deg, #d9b980, #b8925a); opacity: .88;
+  box-shadow: inset 0 0 18px rgba(0,0,0,.28);
+}
+.crease { position: absolute; bottom: 18px; height: 36px; width: 2px; background: rgba(255,255,255,.85); }
+.crease.c1 { left: 12%; } .crease.c2 { right: 12%; }
+.runner { position: absolute; left: 4%; bottom: 24px; font-size: 28px; animation: runUp 6s ease-in-out infinite; }
+.batter { position: absolute; right: 15.5%; bottom: 22px; font-size: 28px; transform-origin: 80% 90%; animation: batterSwing 6s ease-in-out infinite; }
+.stumps {
+  position: absolute; bottom: 22px; right: 11%; width: 30px; height: 48px;
+  display: flex; justify-content: space-between; align-items: flex-end;
+  transform-origin: bottom center; animation: stumpWobble 6s linear infinite;
+}
+.stump { width: 4px; height: 46px; background: #f4e6c4; border-radius: 2px; box-shadow: 0 0 6px rgba(255,230,160,.35); }
+.bail { position: absolute; top: 0; height: 3px; width: 12px; background: #ffd166; border-radius: 2px; }
+.bail.b1 { left: 2px;  animation: bailL 6s ease-out infinite; }
+.bail.b2 { right: 2px; animation: bailR 6s ease-out infinite; }
+.ball {
+  position: absolute; width: 20px; height: 20px; border-radius: 50%; left: 9%; bottom: 92px; opacity: 0;
+  background: radial-gradient(circle at 30% 28%, #ff8a80 0%, #d32f2f 45%, #7f0f17 100%);
+  box-shadow: 0 0 12px rgba(255,70,70,.55), inset -2px -2px 4px rgba(0,0,0,.35);
+  animation: bowl 6s linear infinite;
+}
+.ball::before {
+  content: ""; position: absolute; left: 50%; top: 8%; bottom: 8%; width: 0; margin-left: -1px;
+  border-left: 2px dashed rgba(255,255,255,.85); border-radius: 50%; animation: seamSpin .45s linear infinite;
+}
+.ball::after {
+  content: ""; position: absolute; right: 16px; top: 8px; width: 46px; height: 4px; border-radius: 4px;
+  background: linear-gradient(270deg, rgba(255,90,90,.55), transparent);
+}
+.wicket-pop {
+  position: absolute; right: 19%; top: 14px; font-weight: 900; letter-spacing: 3px; font-size: 1.05rem;
+  color: #ffd166; text-shadow: 0 0 14px rgba(255,209,102,.6); opacity: 0; animation: wicketPop 6s ease-out infinite;
+}
+.scene-tag {
+  position: absolute; left: 14px; top: 10px; font-size: .64rem; font-weight: 900; letter-spacing: 2px;
+  color: rgba(239,247,255,.78); text-transform: uppercase;
+}
+
+/* ---------- CRICKET LAYER: scoreboard ticker ---------- */
+.ticker {
+  overflow: hidden; white-space: nowrap; border: 1px solid var(--panel-border); border-radius: 12px;
+  background: rgba(8,23,39,.78); padding: 9px 0; margin: 6px 0 4px;
+}
+.ticker-track { display: inline-block; animation: tickerMove 42s linear infinite; }
+.ticker:hover .ticker-track { animation-play-state: paused; }
+.ticker-track span {
+  display: inline-block; margin: 0 26px; color: #b6cbe0; font-size: .74rem; font-weight: 800;
+  letter-spacing: 1.4px; text-transform: uppercase;
+}
+.ticker-track span b { color: var(--mint); }
+
 .metric-box {
-  position: relative; overflow: hidden;
-  background: linear-gradient(145deg, rgba(24,53,81,.97), rgba(12,29,48,.97));
-  border: 1px solid rgba(108,165,207,.27); border-radius: 18px;
-  padding: 20px 21px; min-height: 132px;
-  box-shadow: 0 12px 32px rgba(0,0,0,.20);
-  animation: riseIn .55s ease both;
-  transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+  position: relative; overflow: hidden; isolation: isolate;
+  background: linear-gradient(145deg, rgba(25,56,85,.97), rgba(10,27,46,.97));
+  border: 1px solid rgba(108,165,207,.30); border-radius: 18px;
+  padding: 20px 21px; min-height: 137px; box-shadow: 0 12px 32px rgba(0,0,0,.20);
+  animation: riseIn .6s ease both; transition: transform .24s ease, border-color .24s ease, box-shadow .24s ease;
 }
 .metric-box:before {
   content: ""; position: absolute; left: 0; top: 0; right: 0; height: 3px;
-  background: linear-gradient(90deg, var(--mint), var(--cyan), var(--purple));
+  background: linear-gradient(90deg, var(--mint), var(--cyan), var(--purple), var(--pink));
+  background-size: 220% 100%; animation: gradientFlow 7s linear infinite;
 }
-.metric-box:hover {
-  transform: translateY(-4px); border-color: rgba(67,224,181,.6);
-  box-shadow: 0 18px 38px rgba(0,0,0,.30);
+.metric-box:after {
+  content: ""; position: absolute; width: 130px; height: 130px; right: -55px; bottom: -75px;
+  border-radius: 50%; background: rgba(56,217,245,.09); filter: blur(2px); z-index: -1;
 }
-.metric-label { color: #a8c2d8; font-size: .72rem; font-weight: 800; letter-spacing: 1.15px; text-transform: uppercase; }
-.metric-value { color: #fff; font-size: clamp(1.65rem, 2.5vw, 2.2rem); font-weight: 900; margin: 9px 0 3px; }
-.metric-help { color: #8eabc4; font-size: .78rem; line-height: 1.45; }
+.metric-box:hover { transform: translateY(-5px); border-color: rgba(71,228,184,.68); box-shadow: 0 18px 40px rgba(0,0,0,.31), 0 0 22px rgba(56,217,245,.08); }
+.metric-icon {
+  position: absolute; right: 16px; top: 16px; font-size: 1.45rem; animation: ballBob 3.6s ease-in-out infinite;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,.35));
+}
+.metric-box:hover .metric-icon { animation: ballSpin .8s linear infinite; }
+.metric-label { color: #a8c6de; font-size: .70rem; font-weight: 800; letter-spacing: 1.1px; text-transform: uppercase; }
+.metric-value { color: #fff; font-size: clamp(1.65rem, 2.5vw, 2.25rem); font-weight: 900; margin: 9px 0 4px; font-variant-numeric: tabular-nums; }
+.metric-help { color: #9ab5cd; font-size: .77rem; line-height: 1.5; }
+
 [data-testid="stPlotlyChart"] {
-  background: linear-gradient(145deg, rgba(16,35,57,.84), rgba(9,23,39,.72));
+  background: linear-gradient(145deg, rgba(16,36,59,.88), rgba(8,22,38,.83));
   border: 1px solid var(--panel-border); border-radius: 17px; padding: 8px;
-  box-shadow: 0 12px 30px rgba(0,0,0,.14);
-  animation: riseIn .48s ease both;
-  transition: border-color .2s ease, transform .2s ease;
+  box-shadow: 0 12px 30px rgba(0,0,0,.16); animation: riseIn .48s ease both;
+  transition: border-color .22s ease, transform .22s ease, box-shadow .22s ease;
 }
-[data-testid="stPlotlyChart"]:hover { border-color: rgba(54,214,245,.45); transform: translateY(-2px); }
+[data-testid="stPlotlyChart"]:hover { border-color: rgba(56,217,245,.52); transform: translateY(-2px); box-shadow: 0 16px 35px rgba(0,0,0,.22); }
 [data-testid="stExpander"] {
-  background: rgba(15,34,55,.72); border: 1px solid var(--panel-border);
-  border-radius: 13px; margin: 8px 0 13px;
+  background: linear-gradient(115deg, rgba(18,41,65,.90), rgba(12,29,48,.88));
+  border: 1px solid var(--panel-border); border-radius: 13px; margin: 8px 0 13px;
+  transition: border-color .2s ease, box-shadow .2s ease;
 }
-[data-testid="stExpander"] summary { font-weight: 700; }
+[data-testid="stExpander"]:hover { border-color: rgba(56,217,245,.42); box-shadow: 0 8px 20px rgba(0,0,0,.10); }
+[data-testid="stExpander"] summary { font-weight: 800; }
+[data-testid="stExpander"] details { border-radius: 13px; }
 div[data-baseweb="select"] > div {
-  background: #102840; border-color: #345671; border-radius: 10px;
+  background: #102840; border-color: #345671; border-radius: 10px; min-height: 42px;
+  transition: border-color .2s ease, box-shadow .2s ease;
 }
-div[data-baseweb="select"] > div:hover { border-color: var(--cyan); }
+div[data-baseweb="select"] > div:hover { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(56,217,245,.08); }
 div[data-testid="stNumberInput"] input, div[data-testid="stTextInput"] input {
-  background: #102840; color: var(--text); border-radius: 9px;
+  background: #102840; color: var(--text); border-radius: 9px; border-color: #345671;
 }
 div[data-testid="stSlider"] [role="slider"] { border-color: var(--mint); }
 .stTabs [data-baseweb="tab-list"] {
-  gap: 10px; background: rgba(9,24,41,.65); padding: 7px;
-  border: 1px solid var(--panel-border); border-radius: 14px;
+  gap: 9px; background: rgba(8,23,39,.78); padding: 7px;
+  border: 1px solid var(--panel-border); border-radius: 15px; margin-bottom: 12px;
 }
 .stTabs [data-baseweb="tab"] {
-  background: rgba(20,43,67,.85); border: 1px solid transparent;
-  border-radius: 10px; padding: 12px 23px; font-weight: 800;
-  transition: all .2s ease;
+  background: rgba(20,43,67,.84); border: 1px solid transparent; border-radius: 10px;
+  padding: 12px 23px; font-weight: 800; transition: all .22s ease;
 }
-.stTabs [data-baseweb="tab"]:hover { background: rgba(39,77,108,.9); }
+.stTabs [data-baseweb="tab"]:hover { background: rgba(39,77,108,.94); transform: translateY(-1px); }
 .stTabs [aria-selected="true"] {
-  background: linear-gradient(100deg, #087f8c, #1768a5) !important;
-  border-color: rgba(87,220,236,.35) !important;
+  background: linear-gradient(100deg, #087f8c, #1768a5, #6651b8) !important;
+  border-color: rgba(87,220,236,.40) !important; box-shadow: 0 6px 20px rgba(23,104,165,.20);
 }
 .stButton > button {
-  border-radius: 10px; border: 1px solid rgba(54,214,245,.35);
-  background: linear-gradient(100deg, #087f8c, #1768a5);
-  color: white; font-weight: 800; transition: all .2s ease;
+  border-radius: 10px; border: 1px solid rgba(56,217,245,.38);
+  background: linear-gradient(100deg, #087f8c, #1768a5, #6651b8); background-size: 180% auto;
+  color: white; font-weight: 800; transition: all .22s ease;
 }
-.stButton > button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(23,104,165,.3); }
-div[data-testid="stAlert"] { border-radius: 12px; }
-.small-note { color: var(--muted); font-size: .79rem; line-height: 1.6; }
+.stButton > button:hover { transform: translateY(-2px); background-position: right center; box-shadow: 0 8px 20px rgba(23,104,165,.32); }
+div[data-testid="stAlert"] { border-radius: 12px; border: 1px solid var(--panel-border); }
+.small-note { color: var(--muted); font-size: .78rem; line-height: 1.7; padding: 12px 14px; border-radius: 12px; background: rgba(13,31,51,.58); }
 hr { border-color: var(--panel-border); }
 [data-testid="stCaptionContainer"] { color: var(--muted); }
-@keyframes riseIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+[data-testid="stMarkdownContainer"] h3 { margin-top: .45rem; }
+
+@keyframes riseIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes titleShimmer { 0% { background-position: 0% center; } 100% { background-position: 220% center; } }
+@keyframes gradientFlow { 0% { background-position: 0% 50%; } 100% { background-position: 220% 50%; } }
+@keyframes backgroundDrift { 0% { background-position: 0% 0%; } 100% { background-position: 100% 80%; } }
+
+/* cricket keyframes */
+@keyframes ballFloat {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 0; }
+  10%  { opacity: .22; }
+  90%  { opacity: .22; }
+  100% { transform: translateY(-115vh) rotate(720deg); opacity: 0; }
 }
+@keyframes batSwing {
+  0%, 58%, 100% { transform: rotate(-14deg); }
+  74%           { transform: rotate(42deg); }
+  86%           { transform: rotate(-6deg); }
+}
+@keyframes bowl {
+  0%   { left: 9%;  bottom: 94px; opacity: 0; animation-timing-function: ease-in; }
+  5%   { left: 12%; bottom: 92px; opacity: 1; animation-timing-function: ease-in; }
+  52%  { left: 60%; bottom: 22px; opacity: 1; animation-timing-function: ease-out; }
+  78%  { left: 85%; bottom: 50px; opacity: 1; }
+  80%  { left: 86%; bottom: 52px; opacity: 0; }
+  100% { left: 86%; bottom: 52px; opacity: 0; }
+}
+@keyframes seamSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes runUp {
+  0%   { transform: translateX(-6px) translateY(0); }
+  8%   { transform: translateX(10px) translateY(-6px); }
+  16%  { transform: translateX(26px) translateY(0); }
+  24%  { transform: translateX(44px) translateY(-8px); }
+  34%  { transform: translateX(62px) translateY(0); }
+  100% { transform: translateX(62px) translateY(0); }
+}
+@keyframes batterSwing {
+  0%, 70%, 100% { transform: rotate(0deg); }
+  78%           { transform: rotate(-52deg); }
+  90%           { transform: rotate(8deg); }
+}
+@keyframes stumpWobble {
+  0%, 78%, 100% { transform: rotate(0deg); }
+  82% { transform: rotate(5deg); } 86% { transform: rotate(-4deg); } 90% { transform: rotate(2deg); } 94% { transform: rotate(0deg); }
+}
+@keyframes bailL {
+  0%, 78% { transform: translate(0,0) rotate(0deg); opacity: 1; }
+  88%     { transform: translate(-22px,-34px) rotate(-160deg); opacity: 1; }
+  96%     { transform: translate(-34px,14px) rotate(-300deg); opacity: 0; }
+  100%    { transform: translate(0,0) rotate(0deg); opacity: 0; }
+}
+@keyframes bailR {
+  0%, 78% { transform: translate(0,0) rotate(0deg); opacity: 1; }
+  88%     { transform: translate(24px,-40px) rotate(180deg); opacity: 1; }
+  96%     { transform: translate(38px,12px) rotate(320deg); opacity: 0; }
+  100%    { transform: translate(0,0) rotate(0deg); opacity: 0; }
+}
+@keyframes wicketPop {
+  0%, 79%   { opacity: 0; transform: scale(.6); }
+  84%       { opacity: 1; transform: scale(1.25); }
+  92%       { opacity: 1; transform: scale(1); }
+  98%, 100% { opacity: 0; transform: scale(1); }
+}
+@keyframes tickerMove { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes ballBob { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-5px) rotate(18deg); } }
+@keyframes ballSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes ballPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.35); } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
 @media (max-width: 768px) {
   .block-container { padding-left: 1rem; padding-right: 1rem; }
   .hero-title { letter-spacing: -1px; }
-  .metric-box { padding: 16px; min-height: 115px; }
+  .metric-box { padding: 16px; min-height: 118px; }
+  .stTabs [data-baseweb="tab"] { padding: 10px 12px; }
+  .pitch-scene { height: 118px; }
+  .wicket-pop { font-size: .8rem; }
 }
 </style>
 """, unsafe_allow_html=True)
 
 # Consistent, accessible colors across all Plotly Express charts.
-px.defaults.color_discrete_sequence = ["#36D6F5", "#43E0B5", "#A78BFA", "#FFB86B", "#FF6B9A", "#F9E66B", "#70E1A1"]
+px.defaults.color_discrete_sequence = ["#38D9F5", "#47E4B8", "#B39AFF", "#FFBD72", "#FF78B7", "#D6F36A", "#70E1A1", "#FF6B6B"]
+px.defaults.template = "plotly_dark"
 
 ROOT = Path(__file__).resolve().parents[1]
 CANDIDATES = [ROOT/'data'/'raw'/'ipl.db', ROOT/'notebooks'/'ipl.db', ROOT/'data'/'ipl.db', ROOT/'ipl.db', Path.cwd()/'data'/'raw'/'ipl.db', Path.cwd()/'ipl.db']
@@ -197,13 +382,18 @@ def filters_sql(season, styles, alias='d'):
         params.extend(styles)
     return where, params
 
+@st.cache_data(show_spinner=False, ttl=300)
+def get_opponents():
+    return q("SELECT DISTINCT batting_team AS team FROM deliveries WHERE batting_team IS NOT NULL AND TRIM(batting_team)<>'' ORDER BY team")['team'].tolist()
+
 def chart_filters(key, default_season='All seasons', default_styles=None, show_phase=False, show_min_balls=True, show_opponent=False):
     """Unique filter widgets per chart, so each visual can be explored independently."""
     default_styles = default_styles or []
+    season_options = ['All seasons'] + [str(y) for y in SEASONS]
     with st.expander('🎛️ Customize this chart', expanded=False):
         c1, c2, c3 = st.columns([1,1,1])
         with c1:
-            s = st.selectbox('Season', ['All seasons'] + [str(y) for y in SEASONS], index=(['All seasons'] + [str(y) for y in SEASONS]).index(default_season) if default_season in (['All seasons'] + [str(y) for y in SEASONS]) else 0, key=f'{key}_season')
+            s = st.selectbox('Season', season_options, index=season_options.index(default_season) if default_season in season_options else 0, key=f'{key}_season')
         with c2:
             sty = st.multiselect('Bowling style', STYLES, default=default_styles, key=f'{key}_style')
         with c3:
@@ -211,10 +401,6 @@ def chart_filters(key, default_season='All seasons', default_styles=None, show_p
         ph = st.selectbox('Innings phase', ['All phases'] + PHASES, key=f'{key}_phase') if show_phase else 'All phases'
         opp = st.selectbox('Opponent team', ['All opponents'] + get_opponents(), key=f'{key}_opponent') if show_opponent else 'All opponents'
     return s, sty, int(mb), ph, opp
-
-@st.cache_data(show_spinner=False, ttl=300)
-def get_opponents():
-    return q("SELECT DISTINCT batting_team AS team FROM deliveries WHERE batting_team IS NOT NULL AND TRIM(batting_team)<>'' ORDER BY team")['team'].tolist()
 
 # Compose filter fragments; all displayed figures still come from q(SQL).
 def make_where(season, styles, phase='All phases', opponent='All opponents'):
@@ -231,30 +417,97 @@ def empty_chart(message='No data matches these chart filters. Try widening the f
     st.info(message)
 
 def finish_fig(fig, height=390):
-    fig.update_layout(height=height, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                      font=dict(color='#e8f2fc', family='Inter'), margin=dict(l=18,r=18,t=72,b=22),
-                      legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0),
-                      hoverlabel=dict(bgcolor='#10263b', font_color='#ffffff'),
-                      transition=dict(duration=450, easing='cubic-in-out'))
-    fig.update_xaxes(gridcolor='rgba(130,165,190,.15)', zerolinecolor='rgba(130,165,190,.18)')
-    fig.update_yaxes(gridcolor='rgba(130,165,190,.15)', zerolinecolor='rgba(130,165,190,.18)')
+    """Apply the shared premium chart theme and smooth Plotly transitions."""
+    fig.update_layout(
+        height=height,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#eaf4ff', family='Inter, sans-serif', size=12),
+        title=dict(font=dict(size=17, color='#f4f8ff'), x=0.02, xanchor='left'),
+        margin=dict(l=18, r=18, t=76, b=28),
+        legend=dict(
+            orientation='h', yanchor='bottom', y=1.02,
+            xanchor='left', x=0, bgcolor='rgba(0,0,0,0)',
+            font=dict(size=11)
+        ),
+        hoverlabel=dict(
+            bgcolor='#10263b', font_color='#ffffff',
+            bordercolor='#38D9F5', font_size=12
+        ),
+        transition=dict(duration=500, easing='cubic-in-out'),
+        hovermode='closest'
+    )
+    fig.update_xaxes(
+        gridcolor='rgba(130,165,190,.14)',
+        zerolinecolor='rgba(130,165,190,.18)',
+        linecolor='rgba(130,165,190,.24)',
+        tickfont=dict(color='#b7cbe0')
+    )
+    fig.update_yaxes(
+        gridcolor='rgba(130,165,190,.14)',
+        zerolinecolor='rgba(130,165,190,.18)',
+        linecolor='rgba(130,165,190,.24)',
+        tickfont=dict(color='#b7cbe0')
+    )
     return fig
 
 def show_fig(fig, key, height=390):
-    st.plotly_chart(finish_fig(fig, height), use_container_width=True, key=key, config={'displaylogo':False, 'responsive':True})
+    fig = finish_fig(fig, height)
+    cfg = {'displaylogo': False, 'responsive': True}
+    # Newer Streamlit replaced use_container_width with width='stretch'; fall back for older versions.
+    try:
+        st.plotly_chart(fig, width='stretch', key=key, config=cfg)
+    except Exception:
+        st.plotly_chart(fig, use_container_width=True, key=key, config=cfg)
 
-def metric_card(col, label, value, help_text):
+def metric_card(col, label, value, help_text, icon='🏏'):
     with col:
-        st.markdown(f'<div class="metric-box"><div class="metric-label">{label}</div><div class="metric-value">{value}</div><div class="metric-help">{help_text}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-box"><div class="metric-icon">{icon}</div><div class="metric-label">{label}</div><div class="metric-value">{value}</div><div class="metric-help">{help_text}</div></div>', unsafe_allow_html=True)
+
+# ---------------------------- CRICKET ANIMATION BLOCKS ----------------------------
+def ball_field():
+    # Six red cricket balls drifting upward behind the dashboard.
+    st.markdown('<div class="ball-field"><span></span><span></span><span></span><span></span><span></span><span></span></div>', unsafe_allow_html=True)
+
+def bowling_scene():
+    # Loop: bowler runs up -> ball pitches -> batter swings and misses -> stumps hit, bails fly, WICKET! pops.
+    st.markdown(
+        '<div class="pitch-scene">'
+        '<div class="scene-tag">Live delivery · 6.0</div>'
+        '<div class="pitch-strip"></div><div class="crease c1"></div><div class="crease c2"></div>'
+        '<div class="runner">🏃</div>'
+        '<div class="ball"></div>'
+        '<div class="batter">🏏</div>'
+        '<div class="stumps"><div class="bail b1"></div><div class="bail b2"></div>'
+        '<div class="stump"></div><div class="stump"></div><div class="stump"></div></div>'
+        '<div class="wicket-pop">WICKET!</div>'
+        '</div>', unsafe_allow_html=True)
+
+def ticker():
+    items = [
+        '<b>OVER 1–6</b> · Powerplay: fielding restrictions on',
+        '<b>DOT BALL</b> · pressure builds wickets',
+        '<b>OVER 7–15</b> · Middle overs: spin squeeze',
+        '<b>SIX!</b> · bowler goes for 6 runs',
+        '<b>OVER 16–20</b> · Death overs: yorkers decide it',
+        '<b>WICKET</b> · caught, bowled, lbw, stumped',
+        '<b>ECONOMY</b> · runs per 6 legal balls',
+    ]
+    html = ''.join(f'<span>{i}</span>' for i in items)
+    st.markdown(f'<div class="ticker"><div class="ticker-track">{html}{html}</div></div>', unsafe_allow_html=True)
 
 # Header + global defaults (these drive KPI cards and the selected bowler list; each chart can override its own filters).
+ball_field()
 st.markdown('<div class="eyebrow">IPL CRICKET ANALYTICS · DOMAIN B</div>', unsafe_allow_html=True)
-st.markdown('<div class="hero-title">🏏 Bowling Intelligence</div>', unsafe_allow_html=True)
+st.markdown('<div class="hero-row"><span class="bat">🏏</span><div class="hero-title">Bowling Intelligence</div></div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Read the phase. Trust the sample. Pick the right bowler.</div>', unsafe_allow_html=True)
+bowling_scene()
+ticker()
 st.markdown('<div class="reader"><b>For the bowling coach:</b> deciding which bowler to pick and for which overs.</div>', unsafe_allow_html=True)
 with st.sidebar:
     st.markdown('<div class="eyebrow">COACH CONTROL CENTRE</div>', unsafe_allow_html=True)
     st.header('Global selection')
+    st.caption('Set the baseline first. Each chart can then be customized independently.')
     global_season = st.selectbox('Default season', ['All seasons'] + [str(y) for y in SEASONS], key='global_season')
     global_styles = st.multiselect('Default bowling style', STYLES, default=[], key='global_styles')
     global_min_balls = st.slider('Bowler eligibility · minimum legal balls', 0, 3000, 500, 30, key='global_minballs')
@@ -271,9 +524,9 @@ with overview_tab:
     total_bowlers = q(f"WITH x AS (SELECT d.bowler, SUM(CASE WHEN {LEGAL} THEN 1 ELSE 0 END) balls FROM deliveries d GROUP BY d.bowler) SELECT COUNT(*) bowlers, SUM(CASE WHEN balls>=500 THEN 1 ELSE 0 END) qualified FROM x").iloc[0]
     fixed_wickets = q(f"SELECT SUM(CASE WHEN d.is_wicket=1 AND {CREDITED} THEN 1 ELSE 0 END) wickets FROM deliveries d").iloc[0,0]
     a,b,c = st.columns(3)
-    metric_card(a, 'Bowlers in dataset', f"{int(total_bowlers['bowlers'] or 0):,}", f"{int(total_bowlers['qualified'] or 0):,} have at least 500 legal balls")
-    metric_card(b, 'Wickets credited to bowlers', f"{int(fixed_wickets or 0):,}", 'Fixed total before any filter')
-    metric_card(c, 'Spin vs pace · statistical test', 'Add verified result', 'Enter p-value + effect size from your Statistical Report')
+    metric_card(a, 'Bowlers in dataset', f"{int(total_bowlers['bowlers'] or 0):,}", f"{int(total_bowlers['qualified'] or 0):,} have at least 500 legal balls", '🏃')
+    metric_card(b, 'Wickets credited to bowlers', f"{int(fixed_wickets or 0):,}", 'Fixed total before any filter', '🎯')
+    metric_card(c, 'Spin vs pace · statistical test', 'Add verified result', 'Enter p-value + effect size from your Statistical Report', '📊')
     st.caption('The statistical card is intentionally not fabricated. Replace it with your verified test result before submitting.')
 
     # Chart 1: HERO, independent filters
@@ -325,29 +578,10 @@ with overview_tab:
         st.markdown('### 🟢 Dot-ball pressure by phase')
         s,sty,mb,ph,opp=chart_filters('ov_dot',global_season,global_styles,show_min_balls=True,show_phase=True)
         wh,pa=make_where(s,sty,ph,opp)
-        d=q(f"""SELECT {STYLE} style,
-        SUM(CASE WHEN {LEGAL} AND {RUNS}=0 THEN 1 ELSE 0 END) dots,
-        SUM(CASE WHEN {LEGAL} THEN 1 ELSE 0 END) balls,
-        100.0*SUM(CASE WHEN {LEGAL} AND {RUNS}=0 THEN 1 ELSE 0 END)/NULLIF(SUM(CASE WHEN {LEGAL} THEN 1 ELSE 0 END),0) dot_pct
-        FROM deliveries d LEFT JOIN players p ON p.player_name=d.bowler WHERE 1=1 {wh}
-        GROUP BY style HAVING balls>=? AND style<>'Unknown' ORDER BY dots DESC""",pa+[mb])
-        if d.empty:
-            empty_chart()
-        else:
-            fig = px.pie(
-                d, names='style', values='dots', hole=0.62,
-                hover_data={'balls': True, 'dot_pct': ':.1f', 'dots': True},
-                labels={'style':'Bowling style','dots':'Dot balls','balls':'Legal balls','dot_pct':'Dot-ball share (%)'},
-                title='Dot-ball contribution by bowling style'
-            )
-            fig.update_traces(
-                textposition='inside', textinfo='label+percent',
-                insidetextfont=dict(size=13, color='white'),
-                marker=dict(line=dict(color='#0a1728', width=3)),
-                hole=0.62
-            )
-            show_fig(fig, 'ov_dot_chart')
-        st.caption('Donut slices show each style’s share of all dot balls in the selected sample; hover to see its dot-ball percentage and legal-ball count.')
+        d=q(f"""SELECT {PHASE} phase,{STYLE} style,100.0*SUM(CASE WHEN {LEGAL} AND {RUNS}=0 THEN 1 ELSE 0 END)/NULLIF(SUM(CASE WHEN {LEGAL} THEN 1 ELSE 0 END),0) dot_pct,SUM(CASE WHEN {LEGAL} THEN 1 ELSE 0 END) balls
+        FROM deliveries d LEFT JOIN players p ON p.player_name=d.bowler WHERE 1=1 {wh} GROUP BY phase,style HAVING balls>=? AND style<>'Unknown' ORDER BY {PHASE_ORDER}""",pa+[mb])
+        if d.empty: empty_chart()
+        else: show_fig(px.bar(d,x='phase',y='dot_pct',color='style',barmode='group',hover_data=['balls'],labels={'phase':'Phase','dot_pct':'Dot balls (%)','style':'Style','balls':'Legal balls'},title='Higher dot-ball share means more pressure'),'ov_dot_chart')
     with r:
         st.markdown('### 📈 League economy across seasons')
         s,sty,mb,ph,opp=chart_filters('ov_season_econ',global_season,global_styles,show_min_balls=True)
@@ -381,9 +615,9 @@ with bowler_tab:
     100.0*SUM(CASE WHEN {LEGAL} AND {RUNS}=0 THEN 1 ELSE 0 END)/NULLIF(SUM(CASE WHEN {LEGAL} THEN 1 ELSE 0 END),0) dot_pct
     FROM deliveries d WHERE d.bowler=? {pseason}""",pparams).iloc[0]
     a,b,c=st.columns(3)
-    metric_card(a,'Wickets credited',f"{int(pm.wickets or 0):,}",f"{int(pm.balls or 0):,} legal balls bowled")
-    metric_card(b,'Bowling economy','—' if pd.isna(pm.economy) else f'{pm.economy:.2f}',f"Based on {int(pm.balls or 0):,} legal balls")
-    metric_card(c,'Dot-ball share','—' if pd.isna(pm.dot_pct) else f'{pm.dot_pct:.1f}%',f"{int(pm.dots or 0):,} dot balls / {int(pm.balls or 0):,} legal balls")
+    metric_card(a,'Wickets credited',f"{int(pm.wickets or 0):,}",f"{int(pm.balls or 0):,} legal balls bowled",'🏆')
+    metric_card(b,'Bowling economy','—' if pd.isna(pm.economy) else f'{pm.economy:.2f}',f"Based on {int(pm.balls or 0):,} legal balls",'⚡')
+    metric_card(c,'Dot-ball share','—' if pd.isna(pm.dot_pct) else f'{pm.dot_pct:.1f}%',f"{int(pm.dots or 0):,} dot balls / {int(pm.balls or 0):,} legal balls",'🔴')
 
     # Each bowler chart gets separate filters; bowler identity stays fixed.
     st.markdown('### ⭐ Hero chart · Economy by season vs league')
@@ -435,23 +669,8 @@ with bowler_tab:
         wh,pa=make_where(s,sty,ph,opp)
         d=q(f"""SELECT COALESCE(d.wicket_kind,'Not recorded') dismissal,SUM(CASE WHEN d.is_wicket=1 AND {CREDITED} THEN 1 ELSE 0 END) wickets,SUM(CASE WHEN {LEGAL} THEN 1 ELSE 0 END) balls
         FROM deliveries d LEFT JOIN players p ON p.player_name=d.bowler WHERE d.bowler=? {wh} GROUP BY dismissal HAVING wickets>0 AND balls>=? ORDER BY wickets DESC""",[selected_bowler]+pa+[mb])
-        if d.empty:
-            empty_chart()
-        else:
-            fig = px.pie(
-                d, names='dismissal', values='wickets', hole=0.60,
-                hover_data={'balls': True, 'wickets': True},
-                labels={'dismissal':'Dismissal type','wickets':'Credited wickets','balls':'Legal balls'},
-                title=f'{selected_bowler}: wicket mix by dismissal type'
-            )
-            fig.update_traces(
-                textposition='inside', textinfo='label+percent',
-                insidetextfont=dict(size=12, color='white'),
-                marker=dict(line=dict(color='#0a1728', width=3)),
-                hole=0.60
-            )
-            show_fig(fig, 'b_dismissal_chart')
-        st.caption('Donut slices represent credited wickets by dismissal type. Hover to inspect wickets and the legal-ball sample.')
+        if d.empty: empty_chart()
+        else: show_fig(px.bar(d,x='dismissal',y='wickets',text='wickets',hover_data=['balls'],labels={'dismissal':'Dismissal type','wickets':'Credited wickets','balls':'Legal balls'},title='Which dismissal types produce wickets?'),'b_dismissal_chart')
 
 st.markdown('---')
-st.markdown('<div class="small-note">IPL Bowling Intelligence · Streamlit + SQL + Plotly. Legal balls exclude wides/no-balls. Bowler-conceded runs exclude byes, leg-byes and penalty runs. Economy and dot-ball rates show their supporting ball counts. Treat small samples cautiously.</div>',unsafe_allow_html=True)
+st.markdown('<div class="small-note">IPL Bowling Intelligence · Streamlit + SQL + Plotly. Animated CSS interface with interactive Plotly charts. Legal balls exclude wides/no-balls. Bowler-conceded runs exclude byes, leg-byes and penalty runs. Economy and dot-ball rates show their supporting ball counts. Treat small samples cautiously.</div>',unsafe_allow_html=True)
